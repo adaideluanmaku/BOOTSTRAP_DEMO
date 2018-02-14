@@ -52,18 +52,33 @@
 		</div>  
 		
 		<div id="toolbar" class="btn-group">
-			<div class="col-sm-12">
-				<button id="btn_add" type="button" class="btn btn-default">
-		        	<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>新增
-			    </button>
-			    <button id="btn_edit" type="button" class="btn btn-default">
-			        <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>修改
-			    </button>
-			    <button id="btn_delete" type="button" class="btn btn-default">
-			        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>删除
-			    </button>
+				<div class="col-sm-12">
+					<button id="btn_add" type="button" class="btn btn-default">
+						<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>新增
+					</button>
+					<button id="btn_edit" type="button" class="btn btn-default">
+						<span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>修改
+					</button>
+					<button id="btn_delete" type="button" class="btn btn-default">
+						<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>删除
+					</button>
+					<div  class="btn-group">
+					<button id="dropdownMenu1" type="button"
+						class="btn btn-default dropdown-toggle" data-toggle="dropdown"
+						aria-haspopup="true" aria-expanded="true">
+						<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>工具
+					</button>
+					<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+						<li><a href="javascript:alert(1)">Action</a></li>
+						<li><a href="javascript:alert(1)">Another action</a></li>
+						<li><a href="javascript:alert(1)">Something else here</a></li>
+						<li role="separator" class="divider"></li>
+						<li><a href="javascript:alert(1)">Separated link</a></li>
+					</ul>
+					</div>
+				</div>
+
 			</div>
-		</div>
 		<!-- 增加表格样式：style="table-layout: fixed"时，设置列宽才能生效 -->
 		<table id="tb_departments" style="table-layout:fixed; "></table>
 	</div>
