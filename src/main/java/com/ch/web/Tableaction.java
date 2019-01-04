@@ -7,9 +7,12 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.omg.PortableInterceptor.ForwardRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -45,8 +48,8 @@ public class Tableaction {
 		    Map map = new HashMap();
 		    map.put("ID", i);
 		    map.put("Name", "销售部" + i);
-		    map.put("Level", i);
-		    map.put("Desc", "暂无描述信息");
+		    map.put("Level", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa"+i);
+		    map.put("Desc", "1990-01-01 01:01:01");
 		    lstRes.add(map);
 		}
 		
@@ -55,4 +58,18 @@ public class Tableaction {
 		return dataGrid;
 	}
 
+	// 修改
+    @RequestMapping(value = "/put/{param}", method = RequestMethod.PUT)
+    public @ResponseBody String put(@PathVariable String param) {
+    	System.out.println("put:" + param);
+        return "put:" + param;
+    }
+	
+	// 删除
+    @RequestMapping(value = "/delete/{param}", method = RequestMethod.DELETE)
+    public @ResponseBody String delete(@PathVariable String param) {
+    	System.out.println("delete:" + param);
+        return "delete:" + param;
+    }
+    
 }

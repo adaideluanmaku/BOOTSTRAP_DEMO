@@ -1,29 +1,82 @@
+var oTable=null;
+//获取所有行带index功能，getDataIndex_CH
+//获取勾选行带index功能，getSelectionsIndex_CH
+//获取勾选行的index，getSelectionIds_CH
+
+
 $(document).ready(function(){
 	//声明一个表格对象，初始化表格
-	var oTable=new TableInit();
+	oTable=new TableInit();
 	oTable.Init();
 	
-	//查询按钮功能
-	$("#btn_query").click(function(){
-		oTable.search();
-	})
+	//单独悬浮编辑
+	$('#username').editable({
+        type: "text",                //编辑框的类型。支持text|textarea|select|date|checklist等
+        title: "用户名11",              //编辑框的标题
+        disabled: false,             //是否禁用编辑
+        emptytext: "空文本",          //空值的默认文本
+        mode: "popup",              //编辑框的模式：支持popup和inline两种模式，默认是popup
+        validate: function (value) { //字段验证
+            if (!$.trim(value)) {
+                return '不能为空';
+            }
+        }
+    });
 	
-	//操作已勾选数据
-	$("#btn_delete").click(function(){
-		var ids = oTable.getIdSelections();//返回一个包含所有选中行中id列值的数组
-		alert(ids);
-	})
+	$('#Birthday').datetimepicker({  
+        format: 'YYYY-MM-DD HH:mm:ss',  //YYYY-MM-DD HH:mm:ss
+        locale: moment.locale('zh-cn'),
+//        defaultDate: "1990-1-1 00:00:01"
+    });
 	
-	//声明一个dialog窗口
-	var oDialog = new DialogInit();
-	
-	$("#btn_add").click(function(){
-		oDialog.Init();
-//		$('#myModal').modal('show');
-	})
-	
-	//更新父类的iframe高度
-	parent.iframewh(logheight()+100);
+	//鼠标浮动提示窗口-触发事件
+	$(document).on('mouseover mouseout','table td',function(){ 
+		if(event.type == 'mouseover'){//鼠标悬浮
+			if($(this).text().length>5){//浮动窗口
+				$('body').append('<div id="title" style="max-width:400px;max-height:200px;position: absolute;'
+						+'top:0px;left:0px;background-color: #fff2e8;/*自动换行*/	word-wrap: break-word;' 
+						+'overflow: hidden;text-overflow: ellipsis;'
+						+'border: 1px solid #c0c0c0; z-index:9999;"></div>');
+				
+				if($(this).find('a').length > 0){
+					$('#title').text($(this).find('a').text().substring(0,300));
+				}else{
+					$('#title').text($(this).text().substring(0,300));
+				}
+				
+				$(this).mousemove(function(e) { 
+					var xx = e.originalEvent.x || e.originalEvent.layerX || 0; 
+					var yy = e.originalEvent.y || e.originalEvent.layerY || 0; 
+					var newxx=null;
+					var newyy=null;
+					
+					//如果提示框在最下面超过页面高度，则靠上显示
+					var bodyheight=document.body.offsetHeight;
+					var bodywidth=document.body.offsetWidth;
+					if((yy+30+$('#title').height())<bodyheight){
+//						newxx=xx+20;
+						newyy=yy+10;
+					}else{
+//						newxx=xx+20;
+						newyy=yy+10-$('#title').height();
+					}
+					if((xx+20+$('#title').width())<bodywidth){
+						newxx=xx+20;
+//						newyy=yy+10;
+					}else{
+						newxx=xx-20-$('#title').width();
+//						newyy=yy+10-200;
+					}
+					
+					$('#title').css('left',newxx+'px');
+					$('#title').css('top',newyy+'px');
+					
+				}); 
+			}
+		}else if(event.type == 'mouseout'){//鼠标离开
+			$('#title').remove();
+		}
+	}); 
 	
 });
 
@@ -34,6 +87,7 @@ var TableInit =function () {
 	
 	//初始化表格
 	oTableInit.Init = function(){
+		$("#tb_departments").bootstrapTable('destroy'); // 销毁数据表格,不销毁可能有数据缓存问题
 		$('#tb_departments').bootstrapTable({
 			url:address,         				// 请求后台的URL（*）
 			method: 'post',                     // 请求方式（*）
@@ -55,13 +109,25 @@ var TableInit =function () {
 			showRefresh: true,                  // 是否显示刷新按钮
 			minimumCountColumns: 2,             // 最少允许的列数
 			clickToSelect: false,               // 是否启用点击选中行
-			height: 400,                        // 行高，如果没有设置height属性，表格自动根据记录条数觉得表格高度
+			height: table_height(),                        // 行高，如果没有设置height属性，表格自动根据记录条数觉得表格高度
 			uniqueId: "ID",                     // 每一行的唯一标识，一般为主键列
+//			idField: "ID",						//表明每行唯 一的标识符
 			showToggle:true,                    // 是否显示详细视图和列表视图的切换按钮
 			cardView: false,                    // 是否显示详细视图
 			detailView: false, 					//是否显示父子表
 //			fixedColumns: true,					//固定列,引入bootstrap-table-fixed-columns.js
 //	        fixedNumber:2,						//固定前两列,引入bootstrap-table-fixed-columns.js
+			
+			showExport: true,  			// 是否显示导出按钮
+			exportDataType: "selected",		// 'basic', 'all', 'selected'.
+		    exportTypes:['excel','xml'],  	// 导出文件类型
+		    exportOptions:{  
+				ignoreColumn: [0,1],  	// 忽略某一列
+				fileName: '周工作汇报',  	// 文件名称设置
+				worksheetName: 'sheet1',  // 表格工作区名称
+//				tableName: '测试导出文档',  
+		    },
+		    
 			// 传递参数（*）,组织表格参数和页面查询参数
 			queryParams : function (params) {
 			    var temp = {   // 这里的键的名字和控制器的变量名必须一致，这边改动，控制器也需要改成一样的
@@ -69,33 +135,56 @@ var TableInit =function () {
 					offset: params.offset, // 当前页码
 //					sort: params.sort,  //排序列名  
 //				    sortOrder: params.order,//排位命令（desc，asc） 
-//					search: params.search, // 工具栏查询内容,search:true才有
+					search: params.search, // 工具栏查询内容,search:true才有
 					
 					departmentname: $("#txt_search_departmentname").val(),
 					statu: $("#txt_search_statu").val(),
 			    };
 			    return temp;
 			},
+			
 			// 是否显示父子表
-			columns : [ {
+			columns : [{
+				field: 'select',
 				checkbox : true
 			} , {
 				field : 'Name',
 				title : '部门名称',
 				width : 300,
+				align:'center',
 				
 			}, {
 				field : 'ParentName',
 				title : '上级部门',
-				width : 300
+				width : 300,
+				
 			}, {
 				field : 'Level',
 				title : '部门级别',
-				width : 300
+				width : 100,
+				editable: {
+					type: "text",                //编辑框的类型。支持text|textarea|select|date|checklist等
+			        title: "1111",              //编辑框的标题
+			        disabled: false,             //是否禁用编辑
+			        emptytext: "空文本",          //空值的默认文本
+			        mode: "popup",   
+                    validate: function (v) {
+                        if (!v) return '部门级别不能为空';
+
+                    }
+                }
 			}, {
 				field : 'Desc',
 				title : '描述',
-				width : 300
+				width : 300,
+				editable: {
+                    type: 'combodate',
+                    format :'YYYY-MM-DD HH:mm:ss',
+                    viewformat : 'YYYY-MM-DD HH:mm:ss',
+                    template:'YYYY-MM-DD HH:mm:ss',
+                    pk:1,
+                    title:"设置时间",
+                },
 			}, {
 				field : 'Desc0',
 				title : '描述0',
@@ -140,159 +229,90 @@ var TableInit =function () {
 			
 			// 1.点击每行进行函数的触发
 			onClickRow : function(row, tr,flied){
-//				alert(1);
-//				alert(row);
-//				alert(tr);
-//				alert(flied)         
 			},
 
 			// 2. 点击前面的复选框进行对应的操作
 			// 点击全选框时触发的操作
 			onCheckAll:function(rows){
-//				alert(2);
 //				alert(rows);      
 			},
 			// 点击每一个单选框时触发的操作
 			onCheck:function(row){
-//				alert(3);
 //				alert(row);      
 			},
 			// 取消每一个单选框时对应的操作；
 			onUncheck:function(row){
-//				alert(4);
 //				alert(row);      
-			}
+			},
+			
+			//行内编辑保存
+			onClickCell: function(field, value, row, $element) {
+				//当列为编辑状态时，再次点击不会触发
+	            if($element.context.contentEditable!='true'){
+	            	$element.attr('contentEditable', true);
+	            	$element.blur(function() {
+						var index = $element.parent().data('index');
+		            	var tdValue = $element.html();
+		            	if(value != tdValue){
+		            		console.log(1111)
+//		            		$.ajax({
+//			                    type: "post",
+//			                    url: $("#addurl").val()+"/dict/updatedrug",
+//			                    data: row,
+//			                    dataType: 'JSON',
+//			                    success: function (data, status) {
+//			                    	swal({title: "提示",text: ""});
+//			                    },
+//			                    error: function () {
+//			                        alert('编辑失败');
+//			                    },
+//			                    complete: function () {
+		//	
+//			                    }
+//							});
+		            		$("#tb_departments").bootstrapTable('updateCell', {index:index,field:field,value:tdValue});
+		            	}
+		            	$element.attr('contentEditable', 'inherit');
+		            	$element.unbind( 'blur' ); 
+		            });
+	            }
+	        },
 		});
 	}
-	
-	
-	//查询功能调用该方法
-	oTableInit.search = function(){
-		$('#tb_departments').bootstrapTable('refresh', {url: address});
-	}
-	
-	//返回当前列表已选数据，返回的是数组
-	oTableInit.getIdSelections = function(){
-		//返回整个数据
-		var IdSelections = $('#tb_departments').bootstrapTable('getSelections');
-		
-		//返回具体字段数据
-		for(var i=0;i<IdSelections.length;i++){
-			IdSelections[i]=IdSelections[i].ID;
-		}
-		return IdSelections;
-	}
-	
-	//消息提示框
-	oTableInit.dialog = function(){
-		BootstrapDialog.show({
-			title : 'More dialog sizes',				//标题
-			closable: false,							//点击空白处禁止关闭
-//			message : 'Hi Apple!',
-			message: function(dialog) {
-                var $content = $('<div><button class="btn btn-success">Revert button status right now.</button></div>');
-                return $content;
-            },
-			size : BootstrapDialog.SIZE_NORMAL, 		// 默认尺寸
-			buttons : [ {
-				label : '发&nbsp;&nbsp;&nbsp;送',
-				action : function(dialog) {
-					dialog.close();
-				}
-			}, {
-				label : '取消',
-				action : function(dialog) {
-					dialog.close();
-				}
-			},{
-				label : 'Normal',
-				action : function(dialog) {
-					dialog.setTitle('Normal');
-					dialog.setSize(BootstrapDialog.SIZE_NORMAL);
-				}
-			}, {
-				label : 'Small',
-				action : function(dialog) {
-					dialog.setTitle('Small');
-					dialog.setSize(BootstrapDialog.SIZE_SMALL);
-				}
-			}, {
-				label : 'Wide',
-				action : function(dialog) {
-					dialog.setTitle('Wide');
-					dialog.setSize(BootstrapDialog.SIZE_WIDE);
-				}
-			}, {
-				label : 'Large',
-				action : function(dialog) {
-					dialog.setTitle('Large');
-					dialog.setSize(BootstrapDialog.SIZE_LARGE);
-				}
-			}]
-		});
-		
-		return dialog;
-	};
-	
+
 	return oTableInit;
 };
 
+//查询功能调用该方法
+function table_prescription_search(){
+	var address=$("#address").val()+'/table/bootstrap_table_test';
+	$('#tb_departments').bootstrapTable('refresh', {url: address});
+}
 
-//创建一个模态框dialog对象
-var DialogInit = function(){
-	var oDialogInit = new Object();
+function row_append(){
+	$('#tb_departments').bootstrapTable('insertRow',{
+		index : 0,
+		row : {
+			Name :'123',
+			ParentName :'123'
+		}
+	})
+}
 
-	//表单提示窗口
-	oDialogInit.Init = function(){
-		BootstrapDialog.show({
-			title : 'More dialog sizes',				//标题
-			closable: false,							//点击空白处禁止关闭
-//			message : 'Hi Apple!',						//dialog提示语
-			message: function(dialog) {
-                var content = $(document.getElementById("myModal").innerHTML);
-                return content;
-            },
-			size : BootstrapDialog.SIZE_NORMAL, 		// 默认尺寸
-			buttons : [ {
-				label : '发&nbsp;&nbsp;&nbsp;送',
-				action : function(dialog) {
-					dialog.close();
-				}
-			}, {
-				label : '取消',
-				action : function(dialog) {
-					dialog.close();
-				}
-			},{
-				label : 'Normal',
-				action : function(dialog) {
-					dialog.setTitle('Normal');
-					dialog.setSize(BootstrapDialog.SIZE_NORMAL);
-				}
-			}, {
-				label : 'Small',
-				action : function(dialog) {
-					dialog.setTitle('Small');
-					dialog.setSize(BootstrapDialog.SIZE_SMALL);
-				}
-			}, {
-				label : 'Wide',
-				action : function(dialog) {
-					dialog.setTitle('Wide');
-					dialog.setSize(BootstrapDialog.SIZE_WIDE);
-				}
-			}, {
-				label : 'Large',
-				action : function(dialog) {
-					dialog.setTitle('Large');
-					dialog.setSize(BootstrapDialog.SIZE_LARGE);
-				}
-			}]
-		});
-	};
-	
-	return oDialogInit;
-	
+function row_del(){
+	$('#tb_departments').bootstrapTable('removeSelectionId_CH');
+}
+
+function row_update(){
+	var IdSelections=$("#tb_departments").bootstrapTable('getSelections');
+	if(IdSelections.length!=1){
+		swal({
+            title: "提示",
+            text: "请选择一条数据进行操作"
+        });
+		return
+	}
+	alert($('#tb_departments').bootstrapTable('getSelectionId_CH'))
 }
 
 //获取页面元素高度和宽度
@@ -304,3 +324,62 @@ function logheight(){
 	return h;
 }
 
+
+//接口测试方法
+function restful_delete(){
+	var address=$("#address").val()+'/table/delete/a.txt';
+	$.ajax({
+        url: address,
+        type : "post",    // 此处发送的是POST请求
+        data : {
+            _method : "delete",   // 将请求转变为PUT请求
+        },
+        success : function(data){
+        	alert(data)
+            console.log(1);
+        },
+        dataType : "json",
+        error : function(data){
+        	alert("出错了")
+        }
+    })
+}
+//接口测试方法
+function restful_put(){
+	var address=$("#address").val()+'/table/put/a.txt';
+	$.ajax({
+        url: address,
+        type : "post",    // 此处发送的是POST请求
+        data : {
+            _method : "put",   // 将请求转变为PUT请求
+        },
+        success : function(data){
+            alert(data)
+            console.log(1);
+        },
+        dataType : "json",
+        error : function(data){
+        	alert("出错了")
+        }
+    })
+}
+
+function _excel() {  
+    //get请求，可以传递参数，比方说我这里就传了一堆卷号，我只生成传过去的这堆卷号的检验记录  
+    //参数rollNumbers的细节就不展示了，业务相关  
+    window.location.href = $("#address").val()+'/table/';  
+}  
+
+function aaa() {
+	oTable.Init();
+}
+
+function table_height(){
+	var _height=0;
+	//获取父级窗口高度
+	_height=$(window.parent.window).height()-55-150-55-70;
+//	if(_height<300){
+//		_height=300;
+//	}
+	return _height;
+}
